@@ -14,10 +14,10 @@ gen:
 	protoc -I $(ROUTER_PB) $(ROUTER_PB)/pb.proto --go_out=plugins=grpc:$(ROUTER_PB)
 
 build: gen
-	go install node
-	go install router
-	go install frontend
-	go install clikv
+	GOPATH="$(GOPATH)" go install node
+	GOPATH="$(GOPATH)" go install router
+	GOPATH="$(GOPATH)" go install frontend
+	GOPATH="$(GOPATH)" go install clikv
 
 clean:
 	find src -name 'pb.pb.go' -delete

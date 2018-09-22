@@ -1,1 +1,3 @@
 /bin
+src/router/pb/pb\.pb\.go
+src/storage/pb/pb\.pb\.go
