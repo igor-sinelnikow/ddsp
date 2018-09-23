@@ -6,22 +6,18 @@ FRONTEND = frontend/frontend
 
 STORAGE_PB = src/storage/pb
 ROUTER_PB  = src/router/pb
-STORAGE_PB_FILE = $(STORAGE_PB)/pb.pb.go
-ROUTER_PB_FILE  = $(ROUTER_PB)/pb.pb.go
 
 all: build
 
-$(STORAGE_PB_FILE):
+gen:
 	protoc -I $(STORAGE_PB) $(STORAGE_PB)/pb.proto --go_out=plugins=grpc:$(STORAGE_PB)
-
-$(ROUTER_PB_FILE):
 	protoc -I $(ROUTER_PB) $(ROUTER_PB)/pb.proto --go_out=plugins=grpc:$(ROUTER_PB)
 
-build: $(STORAGE_PB_FILE) $(ROUTER_PB_FILE)
-	GOPATH="$(GOPATH)" go install node
-	GOPATH="$(GOPATH)" go install router
-	GOPATH="$(GOPATH)" go install frontend
-	GOPATH="$(GOPATH)" go install clikv
+build: gen
+	go install node
+	go install router
+	go install frontend
+	go install clikv
 
 clean:
 	find src -name 'pb.pb.go' -delete
@@ -45,4 +41,4 @@ test-integration:
 test: test-node test-router test-fe test-integration
 
 
-.PHONY: build clean test test-node test-router test-fe test-integration
+.PHONY: build clean gen test test-node test-router test-fe
