@@ -46,10 +46,10 @@ func New(cfg Config) (*Router, error) {
 	return nil, nil
 }
 
-// Hearbeat registers node in the router.
+// Heartbeat registers node in the router.
 // Returns storage.ErrUnknownDaemon error if node is not served by the Router.
-
-// Hearbeat регистритрует node в router.
+//
+// Heartbeat регистритрует node в router.
 // Возвращает ошибку storage.ErrUnknownDaemon если node не
 // обслуживается Router.
 func (r *Router) Heartbeat(node storage.ServiceAddr) error {

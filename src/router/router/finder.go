@@ -30,6 +30,9 @@ func NewMD5Hasher() *MD5 {
 	}
 }
 
+// Hash computes hash for given k and node.
+//
+// Hash вычисляет hash дла данных k и node.
 func (h *MD5) Hash(k storage.RecordID, node storage.ServiceAddr) uint64 {
 	keySize := k.BinSize()
 	size := keySize + node.BinSize()
