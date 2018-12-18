@@ -1,6 +1,7 @@
 package router
 
 import (
+	"sync"
 	"time"
 
 	"storage"
@@ -31,7 +32,9 @@ type Config struct {
 
 // Router is a router service.
 type Router struct {
-	// TODO: implement
+	cfg  Config
+	hb   map[storage.ServiceAddr]time.Time
+	lock sync.RWMutex
 }
 
 // New creates a new Router with a given cfg.
@@ -42,8 +45,20 @@ type Router struct {
 // Возвращает ошибку storage.ErrNotEnoughDaemons если в cfg.Nodes
 // меньше чем storage.ReplicationFactor nodes.
 func New(cfg Config) (*Router, error) {
-	// TODO: implement
-	return nil, nil
+	if len(cfg.Nodes) < storage.ReplicationFactor {
+		return nil, storage.ErrNotEnoughDaemons
+	}
+
+	r := Router{
+		cfg: cfg,
+		hb:  make(map[storage.ServiceAddr]time.Time, len(cfg.Nodes))}
+
+	now := time.Now()
+	for _, node := range cfg.Nodes {
+		r.hb[node] = now
+	}
+
+	return &r, nil
 }
 
 // Heartbeat registers node in the router.
@@ -53,7 +68,13 @@ func New(cfg Config) (*Router, error) {
 // Возвращает ошибку storage.ErrUnknownDaemon если node не
 // обслуживается Router.
 func (r *Router) Heartbeat(node storage.ServiceAddr) error {
-	// TODO: implement
+	r.lock.Lock()
+	defer r.lock.Unlock()
+	_, ok := r.hb[node]
+	if !ok {
+		return storage.ErrUnknownDaemon
+	}
+	r.hb[node] = time.Now()
 	return nil
 }
 
@@ -73,6 +94,5 @@ func (r *Router) NodesFind(k storage.RecordID) ([]storage.ServiceAddr, error) {
 //
 // List возвращает cписок всех node, обслуживаемых Router.
 func (r *Router) List() []storage.ServiceAddr {
-	// TODO: implement
-	return nil
+	return r.cfg.Nodes
 }
