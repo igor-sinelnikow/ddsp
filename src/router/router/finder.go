@@ -10,7 +10,7 @@ import (
 
 // Hasher is the common interface to compute hash for given k and node.
 //
-// Hasher это общий интерфейс для вычисления hash дла данных k и node.
+// Hasher это общий интерфейс для вычисления hash для данных k и node.
 type Hasher interface {
 	Hash(k storage.RecordID, node storage.ServiceAddr) uint64
 }
@@ -33,7 +33,7 @@ func NewMD5Hasher() *MD5 {
 
 // Hash computes hash for given k and node.
 //
-// Hash вычисляет hash дла данных k и node.
+// Hash вычисляет hash для данных k и node.
 func (h *MD5) Hash(k storage.RecordID, node storage.ServiceAddr) uint64 {
 	keySize := k.BinSize()
 	size := keySize + node.BinSize()
