@@ -1,6 +1,7 @@
 package frontend
 
 import (
+	"sync"
 	"time"
 
 	rclient "router/client"
@@ -38,7 +39,9 @@ type Config struct {
 
 // Frontend is a frontend service.
 type Frontend struct {
-	cfg Config
+	cfg   Config
+	nodes []storage.ServiceAddr
+	once  sync.Once
 }
 
 // New creates a new Frontend with a given cfg.
@@ -101,12 +104,57 @@ func (fe *Frontend) Del(k storage.RecordID) error {
 	})
 }
 
+type getReply struct {
+	d   []byte
+	err error
+}
+
 // Get an item from the storage if an item exists for the given key.
 // Returns error otherwise.
 //
 // Get -- получить запись из хранилища, если запись для данного ключа
 // существует. Иначе вернуть ошибку.
 func (fe *Frontend) Get(k storage.RecordID) ([]byte, error) {
-	// TODO: implement
-	return nil, nil
+	fe.once.Do(func() {
+		var err error
+		for {
+			fe.nodes, err = fe.cfg.RC.List(fe.cfg.Router)
+			if err == nil {
+				break
+			}
+			time.Sleep(InitTimeout)
+		}
+	})
+
+	nodes := fe.cfg.NF.NodesFind(k, fe.nodes)
+	if len(nodes) < storage.MinRedundancy {
+		return nil, storage.ErrNotEnoughDaemons
+	}
+
+	replies := make(chan getReply, len(nodes))
+	for _, node := range nodes {
+		go func(node storage.ServiceAddr) {
+			d, err := fe.cfg.NC.Get(node, k)
+			replies <- getReply{d, err}
+		}(node)
+	}
+
+	countData := make(map[string]int)
+	countErr := make(map[error]int)
+	for range nodes {
+		reply := <-replies
+		if reply.err == nil {
+			countData[string(reply.d)]++
+			if countData[string(reply.d)] >= storage.MinRedundancy {
+				return reply.d, nil
+			}
+		} else {
+			countErr[reply.err]++
+			if countErr[reply.err] >= storage.MinRedundancy {
+				return nil, reply.err
+			}
+		}
+	}
+
+	return nil, storage.ErrQuorumNotReached
 }
